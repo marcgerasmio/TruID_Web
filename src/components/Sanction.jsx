@@ -1,6 +1,39 @@
 import Sidebar from "./Sidebar.jsx";
+import { useState, useEffect } from "react";
+import supabase from "./supabaseClient.jsx";
 
 const Sanction = () => {
+  const [sanctions, setSanctions] = useState([]);
+  const [tenant, setTenants] = useState([]);
+  const [selectedTenant, setSelectedTenant] = useState(""); 
+  const [businessNumber, setBusinessNumber] = useState(""); 
+  const [complain, setComplain] = useState("");
+  const [sanction, setSanction] = useState("");
+  const [clearance, setClearance] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchSanctions = async () => {
+    const { data } = await supabase
+      .from("Sanction")
+      .select("*")
+      .eq("status", "Unresolved");
+    setSanctions(data);
+  };
+
+  const fetchTenants = async () => {
+    const { data } = await supabase
+      .from("Tenant")
+      .select("store_name, business_number");
+    setTenants(data);
+  };
+
+  const handleTenantChange = (e) => {
+    const storeName = e.target.value;
+    setSelectedTenant(storeName);
+    const tenantData = tenant.find((t) => t.store_name === storeName);
+    setBusinessNumber(tenantData?.business_number || "");
+  };
+
   const openModal = () => {
     const modal = document.getElementById("my_modal_3");
     if (modal) {
@@ -15,10 +48,41 @@ const Sanction = () => {
     }
   };
 
+  const add_sanction = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('Sanction')
+        .insert([
+          {
+          store_name : selectedTenant,
+          business_number: businessNumber,
+          complain,
+          sanction,
+          clearance,
+          status : 'Unresolved'
+          },
+        ]);
+      closeModal();
+      fetchSanctions();
+    } catch (err) {
+      alert(`An unexpected error occurred: ${err.message}`);
+    }
+  };
+
+  const filteredSanction = sanctions.filter(sanctions =>
+    sanctions.store_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+
+  useEffect(() => {
+    fetchSanctions();
+    fetchTenants();
+  }, []);
+
   return (
     <>
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 font-mono">
-        {/* Sidebar: visible on large screens */}
+        {/* Sidebar */}
         <Sidebar className="hidden lg:block" />
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 ml-0 lg:ml-64 transition-all duration-300">
@@ -35,12 +99,14 @@ const Sanction = () => {
                     </p>
                   </div>
 
-                  {/* Responsive Search Input */}
+                  {/* Search Input */}
                   <label className="input input-bordered flex items-center gap-2 w-full md:w-1/2 lg:w-1/3">
                     <input
                       type="text"
-                      placeholder="Search ID..."
+                      placeholder="Search Store Name..."
                       className="w-full grow"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -55,39 +121,36 @@ const Sanction = () => {
                       />
                     </svg>
                   </label>
+                  <button
+                    onClick={openModal}
+                    className="px-4 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
+                  >
+                    Add Sanction
+                  </button>
                 </div>
 
-                {/* Table: scrollable on smaller screens */}
+                {/* Table */}
                 <div className="overflow-x-auto">
                   <table className="table w-full">
                     <thead>
                       <tr>
-                        <th>Stall ID</th>
+                        <th>Business Number</th>
                         <th>Store Name</th>
-                        <th>Department</th>
                         <th>Complain</th>
                         <th>Sanction</th>
                         <th>Clearance</th>
-                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>12345</td>
-                        <td>Tabuan</td>
-                        <td>Meat Department</td>
-                        <td>Nalibang</td>
-                        <td>Reclusion Perpetua</td>
-                        <td>500 Pesos Fine</td>
-                        <td>
-                          <button
-                            className="btn-error btn btn-sm text-white"
-                            onClick={openModal}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
+                      {filteredSanction.map((sanction) => (
+                        <tr key={sanction.id}>
+                          <td>{sanction.business_number}</td>
+                          <td>{sanction.store_name}</td>
+                          <td>{sanction.complain}</td>
+                          <td>{sanction.sanction}</td>
+                          <td>{sanction.clearance}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -97,7 +160,7 @@ const Sanction = () => {
         </main>
       </div>
 
-      {/* Modal: responsive width for different screen sizes */}
+      {/* Modal */}
       <dialog id="my_modal_3" className="modal font-mono">
         <div className="modal-box max-w-xs sm:max-w-md lg:max-w-lg">
           <form method="dialog">
@@ -108,13 +171,55 @@ const Sanction = () => {
               ✕
             </button>
           </form>
-          <h3 className="font-bold text-lg">Confirm Action</h3>
-          <p className="py-4">
-            Are you sure you want to delete employee John Doe?
-          </p>
+          <h3 className="font-bold text-lg">Add Sanction</h3>
+          <div className="py-4">
+            <label htmlFor="tenant-dropdown" className="block font-medium">
+              Store Name:
+            </label>
+            <select
+              id="tenant-dropdown"
+              className="select select-bordered w-full"
+              value={selectedTenant}
+              onChange={handleTenantChange}
+            >
+              <option value="">-- Select Store Name --</option>
+              {tenant.map((t) => (
+                <option key={t.business_number} value={t.store_name}>
+                  {t.store_name}
+                </option>
+              ))}
+            </select>
+            <label htmlFor="amount-input" className="block font-medium mt-4">
+              Complain:
+            </label>
+            <input
+              type="text"
+              id="amount-input"
+              className="input input-bordered w-full"
+              onChange={(e) => setComplain(e.target.value)}
+            />
+             <label htmlFor="amount-input" className="block font-medium mt-4">
+              Sanction:
+            </label>
+            <input
+              type="text"
+              id="amount-input"
+              className="input input-bordered w-full"
+              onChange={(e) => setSanction(e.target.value)}
+            />
+             <label htmlFor="amount-input" className="block font-medium mt-4">
+              Clearance:
+            </label>
+            <input
+              type="text"
+              id="amount-input"
+              className="input input-bordered w-full"
+              onChange={(e) => setClearance(e.target.value)}
+            />
+          </div>
           <div className="flex justify-end content-end">
-            <button className="btn btn-error text-white" onClick={closeModal}>
-              Delete
+            <button className="btn btn-primary text-white" onClick={add_sanction}>
+              Save
             </button>
           </div>
         </div>

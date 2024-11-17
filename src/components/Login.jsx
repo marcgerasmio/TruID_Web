@@ -1,7 +1,12 @@
 import { useState } from "react";
+import supabase from "./supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const openModal = () => {
     const modal = document.getElementById("error_modal");
@@ -14,6 +19,21 @@ const Login = () => {
     const modal = document.getElementById("error_modal");
     if (modal) {
       modal.close();
+    }
+  };
+
+  const login = async () => {
+    const { data } = await supabase
+    .from('Admin')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+    if (data && data.password === password && data.email === email) {
+    navigate("/dashboard");
+    }
+    else {
+     openModal();
     }
   };
 
@@ -38,7 +58,6 @@ const Login = () => {
             <p className="mb-4 text-sm sm:text-base md:text-sm font-bold text-gray-500">
               *Tenant Profile and QR Code Rent Payment System
             </p>
-            <form className="mt-6">
               <div className="mb-4">
                 <label className="input input-bordered flex items-center gap-2 w-full">
                   <svg
@@ -55,6 +74,7 @@ const Login = () => {
                     className="grow p-2"
                     placeholder="example@gmail.com"
                     required
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </label>
               </div>
@@ -77,6 +97,7 @@ const Login = () => {
                     placeholder="Enter a password"
                     className="grow p-2"
                     required
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </label>
               </div>
@@ -91,15 +112,12 @@ const Login = () => {
                   Show Password
                 </label>
               </div>
-
               <button
-                type="submit"
+                onClick={login}
                 className="w-full px-4 py-3 font-medium text-white bg-green-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50"
-                onClick={openModal}
               >
                 Sign In
               </button>
-            </form>
           </div>
         </div>
       </div>

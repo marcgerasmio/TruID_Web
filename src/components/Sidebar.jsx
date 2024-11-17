@@ -2,9 +2,11 @@ import { useState } from "react";
 import { RiLogoutBoxRFill } from "react-icons/ri";
 import { FaUser } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const openModal = () => {
     const modal = document.getElementById("error_modal");
@@ -20,6 +22,9 @@ const Sidebar = () => {
     }
   };
 
+  const logout = () => {
+    navigate("/");
+  }
   return (
     <>
       <aside className="bg-gray-800 text-white p-8 lg:fixed lg:h-full lg:w-64 w-full">
@@ -69,6 +74,12 @@ const Sidebar = () => {
             </li>
 
             <li className="p-2 hover:bg-red-600 rounded">
+              <NavLink to="/unpaid" className="block">
+                Unpaid Payments
+              </NavLink>
+            </li>
+
+            <li className="p-2 hover:bg-red-600 rounded">
               <NavLink to="/history" className="block">
                 Payment History
               </NavLink>
@@ -114,7 +125,7 @@ const Sidebar = () => {
           <h3 className="font-bold text-lg">Confirm Action</h3>
           <p className="py-4">Are you sure you want to log out?</p>
           <div className="flex justify-end content-end">
-            <button className="btn btn-error text-white">Log Out</button>
+            <button className="btn btn-error text-white" onClick={logout}>Log Out</button>
           </div>
         </div>
       </dialog>

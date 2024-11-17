@@ -1,8 +1,21 @@
 import Sidebar from "./Sidebar.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import supabase from "./supabaseClient.jsx";
 
 const PaymentHistory = () => {
   const [isPaid, notPaid] = useState(true);
+  const [payments, setPayments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+
+  const fetchPayment = async () => {
+    const { data } = await supabase
+    .from('Rent')
+    .select('*')
+    .eq('status', 'Paid')
+    setPayments(data);
+  };
+
 
   const openModal = () => {
     const modal = document.getElementById("my_modal_3");
@@ -18,6 +31,25 @@ const PaymentHistory = () => {
     }
   };
 
+
+  const formatDate = (date) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    return formattedDate;
+  };
+
+
+  const filteredPayments = payments.filter(payments =>
+    payments.store_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  useEffect(() => {
+    fetchPayment();
+   }, []);
+ 
   return (
     <>
       <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 font-mono">
@@ -42,8 +74,10 @@ const PaymentHistory = () => {
                   <label className="input input-bordered flex items-center gap-2 w-full md:w-1/2 lg:w-1/3">
                     <input
                       type="text"
-                      placeholder="Search ID..."
+                      placeholder="Search Store Name..."
                       className="w-full grow"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -65,32 +99,27 @@ const PaymentHistory = () => {
                   <table className="table w-full">
                     <thead>
                       <tr>
-                        <th>Stall ID</th>
+                        <th>Business Number</th>
                         <th>Store Name</th>
-                        <th>Department</th>
+                        <th>Section</th>
                         <th>Payment Amount</th>
-                        <th>Reference</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>For Month of</th>
+                        <th>Date Paid</th>
+                        <th>Payment Collector</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>12345</td>
-                        <td>Tabuan</td>
-                        <td>Meat Department</td>
-                        <td>$20,000</td>
-                        <td>Receipt#0001</td>
-                        {isPaid ? <td>Paid</td> : <td>Unpaid</td>}
-                        <td>
-                          <button
-                            className="btn-error btn btn-sm text-white"
-                            onClick={openModal}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
+                    {filteredPayments.map((payment) => (
+                    <tr key={payment.id}>
+                      <td>{payment.business_number}</td>
+                      <td>{payment.store_name}</td>
+                      <td>{payment.department}</td>
+                      <td>{payment.amount}</td>
+                      <td>{payment.date}</td>
+                      <td>{formatDate(payment.date_paid)}</td>
+                      <td>{payment.employee_name}</td>
+                    </tr>
+                  ))}
                     </tbody>
                   </table>
                 </div>

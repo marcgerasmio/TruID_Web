@@ -65,10 +65,7 @@ window.location.reload();
   };
 
   const closeModal = () => {
-    const modal = document.getElementById("my_modal_3");
-    if (modal) {
-      modal.close();
-    }
+   window.location.reload();
   };
 
   function extractDate(isoString) {
@@ -191,7 +188,7 @@ window.location.reload();
           </form>
           <h3 className="font-bold text-lg">Confirm Action</h3>
           <p className="py-4">
-            Are you sure you want to delete employee John Doe?
+            Are you sure you want to delete employee?
           </p>
           <div className="flex justify-end content-end">
             <button className="btn btn-error text-white" onClick={closeModal}>

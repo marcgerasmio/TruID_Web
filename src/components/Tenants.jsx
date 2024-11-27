@@ -52,11 +52,15 @@ const Tenants = () => {
     }
   };
 
-  const openModal = (tenant) => {
-    setSelectedTenant(tenant)
-    const modal = document.getElementById("my_modal_3");
-    if (modal) {
-      modal.showModal();
+  const openModal = async (tenant) => {
+    try {
+      const { data, error } = await supabase
+        .from('Tenant')
+        .delete()
+        .eq('id', tenant.id);
+window.location.reload();
+    } catch (err) {
+      alert(`An unexpected error occurred: ${err.message}`);
     }
   };
 
